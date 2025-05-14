@@ -38,7 +38,7 @@ class GameSquare extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: selected ? null : onTap,
       child: Container(
         decoration: BoxDecoration(
           color: backgroundColor,
