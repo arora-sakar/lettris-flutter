@@ -5,12 +5,14 @@ class GameSquare extends StatelessWidget {
   final String letter;
   final bool selected;
   final VoidCallback onTap;
+  final double fontSize;
 
   const GameSquare({
     super.key,
     required this.letter,
     required this.selected,
     required this.onTap,
+    this.fontSize = 20,
   });
 
   @override
@@ -48,9 +50,9 @@ class GameSquare extends StatelessWidget {
         child: Center(
           child: Text(
             letter,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: fontSize,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -64,11 +66,13 @@ class GameSquare extends StatelessWidget {
 class StartButton extends StatelessWidget {
   final bool gameInPlay;
   final VoidCallback onPressed;
+  final double fontSize;
 
   const StartButton({
     super.key,
     required this.gameInPlay,
     required this.onPressed,
+    this.fontSize = 16,
   });
 
   @override
@@ -78,8 +82,16 @@ class StartButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.grey[600],
         foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        minimumSize: const Size(60, 40),
       ),
-      child: Text(gameInPlay ? "PAUSE" : "START"),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          gameInPlay ? "PAUSE" : "START",
+          style: TextStyle(fontSize: fontSize),
+        ),
+      ),
     );
   }
 }
@@ -89,12 +101,14 @@ class WordScoreDisplay extends StatelessWidget {
   final String displayText;
   final bool displayClickable;
   final VoidCallback onTap;
+  final double fontSize;
 
   const WordScoreDisplay({
     super.key,
     required this.displayText,
     required this.displayClickable,
     required this.onTap,
+    this.fontSize = 18,
   });
 
   @override
@@ -105,14 +119,17 @@ class WordScoreDisplay extends StatelessWidget {
         decoration: BoxDecoration(
           color: displayClickable ? Colors.grey[600] : Colors.white,
           border: Border.all(color: Colors.black),
+          borderRadius: BorderRadius.circular(4),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Center(
           child: Text(
             displayText,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: displayClickable ? Colors.white : Colors.black,
-              fontSize: 18,
+              fontSize: fontSize,
             ),
           ),
         ),
@@ -124,10 +141,12 @@ class WordScoreDisplay extends StatelessWidget {
 // Custom back button widget to remove letters
 class GameBackButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final double fontSize;
 
   const GameBackButton({
     super.key,
     required this.onPressed,
+    this.fontSize = 16,
   });
 
   @override
@@ -137,8 +156,16 @@ class GameBackButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.grey[600],
         foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        minimumSize: const Size(60, 40),
       ),
-      child: const Text("BACK"),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          "BACK",
+          style: TextStyle(fontSize: fontSize),
+        ),
+      ),
     );
   }
 }
@@ -146,10 +173,12 @@ class GameBackButton extends StatelessWidget {
 // Info button widget
 class InfoButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final double size;
 
   const InfoButton({
     super.key,
     required this.onPressed,
+    this.size = 30,
   });
 
   @override
@@ -157,8 +186,8 @@ class InfoButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        width: 30,
-        height: 30,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           color: Colors.grey[600],
           shape: BoxShape.circle,
@@ -180,10 +209,12 @@ class InfoButton extends StatelessWidget {
 // Stats button widget
 class StatsButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final double size;
 
   const StatsButton({
     super.key,
     required this.onPressed,
+    this.size = 30,
   });
 
   @override
@@ -191,8 +222,8 @@ class StatsButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        width: 30,
-        height: 30,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           color: Colors.grey[600],
           shape: BoxShape.circle,
@@ -215,12 +246,14 @@ class GameOverPopup extends StatelessWidget {
   final int score;
   final int highScore;
   final VoidCallback onOkPressed;
+  final double fontSize;
 
   const GameOverPopup({
     super.key,
     required this.score,
     required this.highScore,
     required this.onOkPressed,
+    this.fontSize = 16,
   });
 
   @override
@@ -235,21 +268,30 @@ class GameOverPopup extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
+          Text(
             "GAME OVER !!",
             style: TextStyle(
-              fontSize: 20,
+              fontSize: fontSize * 1.2,
               fontWeight: FontWeight.bold,
             ),
           ),
           const Divider(),
           const SizedBox(height: 8),
-          Text("Your Score: $score"),
-          Text("High Score: $highScore"),
+          Text(
+            "Your Score: $score",
+            style: TextStyle(fontSize: fontSize),
+          ),
+          Text(
+            "High Score: $highScore",
+            style: TextStyle(fontSize: fontSize),
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: onOkPressed,
-            child: const Text("OK"),
+            child: Text(
+              "OK",
+              style: TextStyle(fontSize: fontSize),
+            ),
           ),
         ],
       ),
@@ -259,44 +301,48 @@ class GameOverPopup extends StatelessWidget {
 
 // Instructions Popup Widget
 class InstructionsPopup extends StatelessWidget {
-  const InstructionsPopup({super.key});
+  final double fontSize;
+
+  const InstructionsPopup({
+    super.key,
+    this.fontSize = 14,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.black),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Center(
-              child: Text(
-                "HOW TO PLAY",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.black),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              "HOW TO PLAY",
+              style: TextStyle(
+                fontSize: fontSize * 1.3,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const Divider(),
-            const Text(
-              "Make as many words as possible before space for falling alphabets runs out.",
-            ),
-            const SizedBox(height: 16),
-            const Text("• Press START/PAUSE to start or pause the game."),
-            const Text("• Press the alphabets A-Z that you want to append to your word."),
-            const Text("• Press BACK to remove letter from the end of the word."),
-            const Text("• The word is displayed in a word box between START and BACK."),
-            const Text("• As soon as a valid word of 3 or more alphabets is formed, word box becomes pressable."),
-            const Text("• Press it to clear the selected alphabets."),
-            const Text("• The bigger the word the more points you get for it."),
-          ],
-        ),
+          ),
+          const Divider(),
+          Text(
+            "Make as many words as possible before space for falling alphabets runs out.",
+            style: TextStyle(fontSize: fontSize),
+          ),
+          const SizedBox(height: 16),
+          Text("• Press START/PAUSE to start or pause the game.", style: TextStyle(fontSize: fontSize)),
+          Text("• Press the alphabets A-Z that you want to append to your word.", style: TextStyle(fontSize: fontSize)),
+          Text("• Press BACK to remove letter from the end of the word.", style: TextStyle(fontSize: fontSize)),
+          Text("• The word is displayed in a word box between START and BACK.", style: TextStyle(fontSize: fontSize)),
+          Text("• As soon as a valid word of 3 or more alphabets is formed, word box becomes pressable.", style: TextStyle(fontSize: fontSize)),
+          Text("• Press it to clear the selected alphabets.", style: TextStyle(fontSize: fontSize)),
+          Text("• The bigger the word the more points you get for it.", style: TextStyle(fontSize: fontSize)),
+        ],
       ),
     );
   }
@@ -306,11 +352,13 @@ class InstructionsPopup extends StatelessWidget {
 class StatsPopup extends StatelessWidget {
   final int score;
   final int highScore;
+  final double fontSize;
 
   const StatsPopup({
     super.key,
     required this.score,
     required this.highScore,
+    this.fontSize = 16,
   });
 
   @override
@@ -325,16 +373,22 @@ class StatsPopup extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
+          Text(
             "Statistics",
             style: TextStyle(
-              fontSize: 20,
+              fontSize: fontSize * 1.2,
               fontWeight: FontWeight.bold,
             ),
           ),
           const Divider(),
-          Text("Current Score: $score"),
-          Text("High Score: $highScore"),
+          Text(
+            "Current Score: $score",
+            style: TextStyle(fontSize: fontSize),
+          ),
+          Text(
+            "High Score: $highScore",
+            style: TextStyle(fontSize: fontSize),
+          ),
         ],
       ),
     );
