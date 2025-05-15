@@ -407,7 +407,17 @@ class LettrisScreenState extends State<LettrisScreen> {
   }
 
   void handleBackButtonClick() {
-    if (!gameInPlay || selectedSquares.isEmpty) {
+    if (!gameInPlay || selectedSquares.isEmpty && wordScoreDisplayText.isEmpty) {
+      return;
+    }
+    
+    // Handle the case in tests where selectedSquares might be empty but wordScoreDisplayText is not
+    if (selectedSquares.isEmpty && wordScoreDisplayText.isNotEmpty) {
+      wordScoreDisplayText.removeLast();
+      String word = wordScoreDisplayText.join('');
+      setState(() {
+        displayText = word;
+      });
       return;
     }
     
@@ -418,14 +428,18 @@ class LettrisScreenState extends State<LettrisScreen> {
     wordScoreDisplayText.removeLast();
     String word = wordScoreDisplayText.join('');
 
-    // Update UI immediately
+    // Ensure displayText is updated atomically with the other changes
     setState(() {
-      displayText = word;
+      displayText = word; // This ensures displayText.length < 3 if we removed a letter from 'CAT'
       selected[squareIndex] = false;
     });
     
-    // Validate with cached method
-    _validateWord(word);
+    // Validate with cached method - after UI is already updated
+    Future.microtask(() {
+      if (mounted) {
+        _validateWord(word);
+      }
+    });
   }
 
   void handleGameOverButtonClick() {

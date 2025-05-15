@@ -42,6 +42,11 @@ class GameSquare extends StatelessWidget {
     return GestureDetector(
       onTap: selected ? null : onTap,
       child: Container(
+        // Add minimum constraints for better accessibility
+        constraints: const BoxConstraints(
+          minWidth: 48.0,
+          minHeight: 48.0,
+        ),
         decoration: BoxDecoration(
           color: backgroundColor,
           border: border,
@@ -83,7 +88,7 @@ class StartButton extends StatelessWidget {
         backgroundColor: Colors.grey[600],
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-        minimumSize: const Size(60, 40),
+        minimumSize: const Size(60, 48),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -122,6 +127,8 @@ class WordScoreDisplay extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        // Ensure minimum height for accessibility
+        constraints: const BoxConstraints(minHeight: 48.0),
         child: Center(
           child: Text(
             displayText,
@@ -157,7 +164,7 @@ class GameBackButton extends StatelessWidget {
         backgroundColor: Colors.grey[600],
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-        minimumSize: const Size(60, 40),
+        minimumSize: const Size(60, 48),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -178,26 +185,36 @@ class InfoButton extends StatelessWidget {
   const InfoButton({
     super.key,
     required this.onPressed,
-    this.size = 30,
+    this.size = 48,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Ensure a minimum size of 48px for accessibility
+    final double accessibleSize = 48.0;
+    
     return GestureDetector(
       onTap: onPressed,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.grey[600],
-          shape: BoxShape.circle,
-        ),
-        child: const Center(
-          child: Text(
-            "i",
-            style: TextStyle(
-              color: Colors.white,
-              fontStyle: FontStyle.italic,
+      behavior: HitTestBehavior.opaque, // Extend the touchable area
+      child: SizedBox(
+        width: accessibleSize,
+        height: accessibleSize,
+        child: Center(
+          child: Container(
+            width: size < accessibleSize ? size : accessibleSize,
+            height: size < accessibleSize ? size : accessibleSize,
+            decoration: BoxDecoration(
+              color: Colors.grey[600],
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Text(
+                "i",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ),
           ),
         ),
@@ -214,25 +231,35 @@ class StatsButton extends StatelessWidget {
   const StatsButton({
     super.key,
     required this.onPressed,
-    this.size = 30,
+    this.size = 48,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Ensure a minimum size of 48px for accessibility
+    final double accessibleSize = 48.0;
+    
     return GestureDetector(
       onTap: onPressed,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.grey[600],
-          shape: BoxShape.circle,
-        ),
-        child: const Center(
-          child: Text(
-            "...",
-            style: TextStyle(
-              color: Colors.white,
+      behavior: HitTestBehavior.opaque, // Extend the touchable area
+      child: SizedBox(
+        width: accessibleSize,
+        height: accessibleSize,
+        child: Center(
+          child: Container(
+            width: size < accessibleSize ? size : accessibleSize,
+            height: size < accessibleSize ? size : accessibleSize,
+            decoration: BoxDecoration(
+              color: Colors.grey[600],
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Text(
+                "...",
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ),
