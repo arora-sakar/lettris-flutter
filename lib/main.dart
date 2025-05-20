@@ -59,7 +59,8 @@ class LettrisApp extends StatelessWidget {
       title: 'A2Z Games',
       debugShowCheckedModeBanner: false, // Remove debug banner
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.grey),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7DFA)),
+        primaryColor: const Color(0xFF2E7DFA),
         useMaterial3: true,
         // Add responsive text theme
         textTheme: const TextTheme(

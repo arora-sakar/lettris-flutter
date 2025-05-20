@@ -584,7 +584,7 @@ class LettrisScreenState extends State<LettrisScreen> {
             // Top bar
             Container(
               height: headerHeight,
-              color: Colors.grey[600],
+              color: const Color(0xFF1A4FBD),
               child: Row(
                 children: [
                   Padding(
@@ -746,7 +746,7 @@ class LettrisScreenState extends State<LettrisScreen> {
                   // Top bar
                   Container(
                     height: headerHeight,
-                    color: Colors.grey[600],
+                    color: const Color(0xFF1A4FBD),
                     child: Row(
                       children: [
                         Padding(

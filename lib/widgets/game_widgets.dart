@@ -88,7 +88,7 @@ class StartButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.grey[600],
+        backgroundColor: const Color(0xFF1A4FBD),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
         minimumSize: const Size(60, 48),
@@ -125,7 +125,7 @@ class WordScoreDisplay extends StatelessWidget {
       onTap: displayClickable ? onTap : null,
       child: Container(
         decoration: BoxDecoration(
-          color: displayClickable ? Colors.grey[600] : Colors.white,
+          color: displayClickable ? const Color(0xFF1A4FBD) : Colors.white,
           border: Border.all(color: Colors.black),
           borderRadius: BorderRadius.circular(4),
         ),
@@ -164,7 +164,7 @@ class GameBackButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.grey[600],
+        backgroundColor: const Color(0xFF1A4FBD),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
         minimumSize: const Size(60, 48),
@@ -207,7 +207,7 @@ class InfoButton extends StatelessWidget {
             width: size < accessibleSize ? size : accessibleSize,
             height: size < accessibleSize ? size : accessibleSize,
             decoration: BoxDecoration(
-              color: Colors.grey[600],
+              color: const Color(0xFF1A4FBD),
               shape: BoxShape.circle,
             ),
             child: const Center(
@@ -253,7 +253,7 @@ class StatsButton extends StatelessWidget {
             width: size < accessibleSize ? size : accessibleSize,
             height: size < accessibleSize ? size : accessibleSize,
             decoration: BoxDecoration(
-              color: Colors.grey[600],
+              color: const Color(0xFF1A4FBD),
               shape: BoxShape.circle,
             ),
             child: const Center(
