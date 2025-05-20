@@ -1,10 +1,8 @@
 import 'dart:math';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart' show rootBundle;
-
-const String localWordsVersion = "localWordsV1";
+import 'package:flutter/foundation.dart';
+import 'dictionary/dictionary_loader.dart';
 
 class Square {
   String alphabet;
@@ -22,18 +20,44 @@ class Square {
   }
 }
 
+// Singleton instance of DictionaryLoader
+final DictionaryLoader _dictionaryLoader = DictionaryLoader.instance;
+
 // Helper function to get a pseudorandom letter with weighted distribution
 String getPseudorandomLetter() {
   const String weightedLetters = "EEEEEEEEEEAAAAAAAARRRRRRRIIIIIIIOOOOOOOTTTTTTTNNNNNNNSSSSSSLLLLLCCCCCUUUUDDDPPPMMMHHHGGBBFFYYWKVXZJQ";
   return weightedLetters[Random().nextInt(weightedLetters.length)];
 }
 
-// Fetch words from assets/words.txt and store in local storage
+// Initialize the dictionary
 Future<void> loadDictionary() async {
+  try {
+    // Initialize the new dictionary system
+    await _dictionaryLoader.initialize();
+    
+    // For backward compatibility, also set the old flag
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("localWordsV1", true);
+    
+    if (kDebugMode) {
+      print("Dictionary loaded successfully");
+    }
+  } catch (error) {
+    if (kDebugMode) {
+      print("Error loading dictionary: $error");
+    }
+    
+    // If new dictionary fails, try old method for fallback
+    await _loadLegacyDictionary();
+  }
+}
+
+// Legacy dictionary loading method (kept for backward compatibility)
+Future<void> _loadLegacyDictionary() async {
   final prefs = await SharedPreferences.getInstance();
   
   // Check if dictionary is already loaded
-  if (prefs.getBool(localWordsVersion) == true) {
+  if (prefs.getBool("localWordsV1") == true) {
     return;
   }
   
@@ -49,9 +73,11 @@ Future<void> loadDictionary() async {
       }
     }
     
-    await prefs.setBool(localWordsVersion, true);
+    await prefs.setBool("localWordsV1", true);
   } catch (error) {
-    print("Error loading dictionary: $error");
+    if (kDebugMode) {
+      print("Error loading legacy dictionary: $error");
+    }
   }
 }
 
@@ -61,6 +87,23 @@ Future<bool> checkValidWord(String word) async {
     return false;
   }
 
+  // Try the new dictionary first
+  try {
+    if (_dictionaryLoader.isInitialized) {
+      return await _dictionaryLoader.isValidWord(word);
+    }
+  } catch (error) {
+    if (kDebugMode) {
+      print("Error with new dictionary, falling back to legacy: $error");
+    }
+  }
+  
+  // Fall back to the old method if new dictionary isn't available
+  return await _checkWordLegacy(word);
+}
+
+// Legacy word validation method (kept for backward compatibility)
+Future<bool> _checkWordLegacy(String word) async {
   final prefs = await SharedPreferences.getInstance();
   
   // Check local storage first
@@ -69,35 +112,22 @@ Future<bool> checkValidWord(String word) async {
   }
   
   // For common English words, allow even without API validation
-  if (word.length >= 4 && isCommonEnglishWord(word)) {
+  if (word.length >= 4 && _isCommonEnglishWord(word)) {
     await prefs.setString(word, "valid");
     return true;
   }
   
-  try {
-    final response = await http.get(
-      Uri.parse('https://api.dictionaryapi.dev/api/v2/entries/en/$word')
-    ).timeout(const Duration(seconds: 3)); // Add timeout
-    
-    if (response.statusCode == 200) {
-      await prefs.setString(word, "valid");
-      return true;
-    }
-  } catch (error) {
-    print("Error checking word: $error");
-    
-    // Fallback validation for when API is unreachable
-    if (word.length >= 3 && isCommonEnglishWord(word)) {
-      await prefs.setString(word, "valid");
-      return true;
-    }
+  // No API call here - just use local validation for fallback
+  if (word.length >= 3 && _isCommonEnglishWord(word)) {
+    await prefs.setString(word, "valid");
+    return true;
   }
   
   return false;
 }
 
 // Basic check for common English words based on patterns
-bool isCommonEnglishWord(String word) {
+bool _isCommonEnglishWord(String word) {
   // Common word endings
   final List<String> commonEndings = ['ing', 'ed', 's', 'er', 'ly', 'est', 'ment', 'tion', 'ness', 'ful', 'less'];
   
@@ -124,6 +154,52 @@ bool isCommonEnglishWord(String word) {
   }
   
   return false;
+}
+
+// Track word usage for analytics and improving dictionary
+Future<void> trackWordUsage(String word) async {
+  if (word.length < 3) return;
+  
+  try {
+    // Normalize the word to uppercase for consistency
+    final upperWord = word.toUpperCase();
+    
+    // Track in the new dictionary system
+    if (_dictionaryLoader.isInitialized) {
+      await _dictionaryLoader.trackWordUsage(upperWord);
+    }
+    
+    // Also store in recent words list in shared preferences
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> recentWords = prefs.getStringList('recentWords') ?? [];
+    
+    // Check if the word already exists (case-insensitive)
+    final bool alreadyExists = recentWords.any(
+      (existingWord) => existingWord.toUpperCase() == upperWord
+    );
+    
+    if (!alreadyExists) {
+      // Add the word at the beginning of the list (newest first)
+      recentWords.insert(0, upperWord);
+      
+      // Keep list to a reasonable size
+      if (recentWords.length > 100) {
+        recentWords.removeLast(); // Remove the oldest word at the end
+      }
+      
+      await prefs.setStringList('recentWords', recentWords);
+    }
+  } catch (error) {
+    if (kDebugMode) {
+      print("Error tracking word usage: $error");
+    }
+  }
+}
+
+// Get recent words
+Future<List<String>> getRecentWords() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getStringList('recentWords') ?? [];
 }
 
 // Get high score from shared preferences

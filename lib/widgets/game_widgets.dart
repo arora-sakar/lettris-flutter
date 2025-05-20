@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lettris/utils/game_utils.dart';
+import 'package:lettris/utils/dictionary/dictionary_loader.dart';
+import 'package:lettris/utils/dictionary/word_dictionary.dart';
 
 // Square widget for the game grid
 class GameSquare extends StatelessWidget {
@@ -375,8 +378,8 @@ class InstructionsPopup extends StatelessWidget {
   }
 }
 
-// Stats Popup Widget
-class StatsPopup extends StatelessWidget {
+// Stats Popup Widget - Now with recent words
+class StatsPopup extends StatefulWidget {
   final int score;
   final int highScore;
   final double fontSize;
@@ -387,6 +390,93 @@ class StatsPopup extends StatelessWidget {
     required this.highScore,
     this.fontSize = 16,
   });
+
+  @override
+  State<StatsPopup> createState() => _StatsPopupState();
+}
+
+class _StatsPopupState extends State<StatsPopup> {
+  List<String> recentWords = [];
+  bool isLoading = true;
+  bool isResettingDictionary = false;
+  int wordCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentWords();
+  }
+
+  Future<void> _loadRecentWords() async {
+    try {
+      final words = await getRecentWords();
+      
+      // Get the word count if dictionary is initialized
+      int count = 0;
+      if (DictionaryLoader.instance.isInitialized) {
+        try {
+          count = await WordDictionary().getWordCount();
+        } catch (e) {
+          // Ignore errors
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          recentWords = words;
+          wordCount = count;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+  
+  Future<void> _resetDictionary() async {
+    setState(() {
+      isResettingDictionary = true;
+    });
+    
+    try {
+      // Reset the dictionary
+      await DictionaryLoader.instance.resetDictionary();
+      
+      // Reload recent words
+      await _loadRecentWords();
+      
+      // Show success snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Dictionary reset successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error resetting dictionary: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isResettingDictionary = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -403,19 +493,86 @@ class StatsPopup extends StatelessWidget {
           Text(
             "Statistics",
             style: TextStyle(
-              fontSize: fontSize * 1.2,
+              fontSize: widget.fontSize * 1.2,
               fontWeight: FontWeight.bold,
             ),
           ),
           const Divider(),
           Text(
-            "Current Score: $score",
-            style: TextStyle(fontSize: fontSize),
+            "Current Score: ${widget.score}",
+            style: TextStyle(fontSize: widget.fontSize),
           ),
           Text(
-            "High Score: $highScore",
-            style: TextStyle(fontSize: fontSize),
+            "High Score: ${widget.highScore}",
+            style: TextStyle(fontSize: widget.fontSize),
           ),
+          const SizedBox(height: 8),
+          Text(
+            "Dictionary Words: $wordCount",
+            style: TextStyle(fontSize: widget.fontSize * 0.9),
+          ),
+          const SizedBox(height: 20),
+          // Add a button to reset the dictionary (useful for development)
+          if (isResettingDictionary)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else
+            ElevatedButton(
+              onPressed: _resetDictionary,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[400],
+                foregroundColor: Colors.white,
+              ),
+              child: Text(
+                "Reset Dictionary",
+                style: TextStyle(fontSize: widget.fontSize * 0.9),
+              ),
+            ),
+          Text(
+            "Recent Words:",
+            style: TextStyle(
+              fontSize: widget.fontSize,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (isLoading)
+            const SizedBox(
+              height: 50,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (recentWords.isEmpty)
+            Text(
+              "No words found yet",
+              style: TextStyle(
+                fontSize: widget.fontSize * 0.9,
+                fontStyle: FontStyle.italic,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              children: recentWords.take(10).map((word) {
+                // Generate a color based on the word's first letter
+                final int letterCode = word[0].codeUnitAt(0) - 'A'.codeUnitAt(0);
+                final double hue = (letterCode * 13.85) % 360;
+                final Color chipColor = HSLColor.fromAHSL(1.0, hue, 0.7, 0.5).toColor();
+                
+                return Chip(
+                  label: Text(
+                    word,
+                    style: TextStyle(
+                      fontSize: widget.fontSize * 0.9,
+                      color: Colors.white,
+                    ),
+                  ),
+                  backgroundColor: chipColor,
+                );
+              }).toList(),
+            ),
         ],
       ),
     );

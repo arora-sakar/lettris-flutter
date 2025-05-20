@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lettris/screens/home_screen.dart';
 import 'package:lettris/screens/lettris_screen.dart';
+import 'package:lettris/utils/game_utils.dart';
+import 'package:flutter/foundation.dart';
 
-void main() {
+void main() async {
+  // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
   
   // Allow both portrait and landscape orientations
@@ -13,7 +16,38 @@ void main() {
     DeviceOrientation.landscapeRight,
   ]);
   
+  // Initialize dictionary in the background
+  _initializeDictionary();
+  
+  // Start the app
   runApp(const LettrisApp());
+}
+
+// Initialize dictionary asynchronously to avoid blocking the UI
+Future<void> _initializeDictionary() async {
+  try {
+    if (kDebugMode) {
+      print('Starting dictionary initialization...');
+      final stopwatch = Stopwatch()..start();
+      
+      await loadDictionary();
+      
+      stopwatch.stop();
+      print('Dictionary initialized in ${stopwatch.elapsedMilliseconds}ms');
+    } else {
+      // In release mode, just load without logging
+      await loadDictionary();
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('Error initializing dictionary: $e');
+    }
+    
+    // Retry with a delay if initialization fails
+    Future.delayed(const Duration(seconds: 3), () {
+      _initializeDictionary();
+    });
+  }
 }
 
 class LettrisApp extends StatelessWidget {

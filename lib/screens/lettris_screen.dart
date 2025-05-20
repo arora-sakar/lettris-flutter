@@ -381,6 +381,9 @@ class LettrisScreenState extends State<LettrisScreen> {
 
     getGridState();
     
+    // Get the word the player found
+    final String foundWord = wordScoreDisplayText.join('');
+    
     int newScore = score + wordScoreDisplayText.length * 2;
     
     if (newScore > highScore) {
@@ -391,6 +394,9 @@ class LettrisScreenState extends State<LettrisScreen> {
     setState(() {
       score = newScore;
     });
+    
+    // Track word usage for statistics and dictionary improvements
+    trackWordUsage(foundWord);
     
     // Clear word display in a separate state update to avoid conflicts
     clearWordDisplay();
