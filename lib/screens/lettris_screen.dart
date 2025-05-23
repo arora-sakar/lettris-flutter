@@ -3,6 +3,7 @@ import 'dart:math' show max;
 import 'package:flutter/material.dart';
 import 'package:lettris/utils/game_utils.dart';
 import 'package:lettris/widgets/game_widgets.dart';
+import 'package:lettris/widgets/animated_game_square.dart';
 
 class LettrisScreen extends StatefulWidget {
   const LettrisScreen({super.key});
@@ -42,17 +43,24 @@ class LettrisScreenState extends State<LettrisScreen> {
   // Performance optimizations
   Timer? _validationDebounce;
   final Map<String, bool> _wordValidationCache = {}; // In-memory cache
+  
+  // Animation state management
+  Map<int, AnimatedSquareData> animatedSquares = {};
+  SquareAnimationManager? animationManager;
+  bool isAnimating = false;
 
   @override
   void initState() {
     super.initState();
     _initializeGame();
+    _initializeAnimations();
   }
 
   @override
   void dispose() {
     timer?.cancel();
     _validationDebounce?.cancel();
+    animationManager?.dispose();
     super.dispose();
   }
   
@@ -92,6 +100,84 @@ class LettrisScreenState extends State<LettrisScreen> {
     
     setState(() {});
   }
+  
+  // Initialize animation system
+  void _initializeAnimations() {
+    animationManager = SquareAnimationManager();
+    
+    // Initialize animated squares data
+    animatedSquares.clear();
+    for (int i = 0; i < totalSquares; i++) {
+      animatedSquares[i] = _createAnimatedSquareData(i);
+    }
+  }
+  
+  // Create AnimatedSquareData for a given index
+  AnimatedSquareData _createAnimatedSquareData(int index) {
+    return AnimatedSquareData(
+      letter: letters[index],
+      selected: selected[index],
+      gridIndex: index,
+      isAnimating: false,
+      isFalling: false,
+      isRemoving: false,
+      animationProgress: 0.0,
+    );
+  }
+  
+  // Update animation data for a specific square
+  void _updateAnimatedSquareData(int index, AnimatedSquareData data) {
+    if (mounted) {
+      setState(() {
+        animatedSquares[index] = data;
+      });
+    }
+  }
+  
+  // Update square animation state
+  void _updateSquareAnimation(int index, {
+    bool? isAnimating,
+    bool? isFalling,
+    bool? isRemoving,
+    double? animationProgress,
+    int? fromIndex,
+    int? toIndex,
+  }) {
+    final currentData = animatedSquares[index] ?? _createAnimatedSquareData(index);
+    final updatedData = currentData.copyWith(
+      isAnimating: isAnimating,
+      isFalling: isFalling,
+      isRemoving: isRemoving,
+      animationProgress: animationProgress,
+      fromIndex: fromIndex,
+      toIndex: toIndex,
+    );
+    _updateAnimatedSquareData(index, updatedData);
+  }
+  
+  // Reset animation for a specific square
+  void _resetSquareAnimation(int index) {
+    _updateAnimatedSquareData(index, _createAnimatedSquareData(index));
+  }
+  
+  // Get all animated squares data
+  List<AnimatedSquareData> _getAllAnimatedSquares() {
+    return List.generate(totalSquares, (index) => 
+      animatedSquares[index] ?? _createAnimatedSquareData(index)
+    );
+  }
+  
+  // Sync animation data with current game state (call this after game state changes)
+  void _syncAnimationData() {
+    for (int i = 0; i < totalSquares; i++) {
+      final currentData = animatedSquares[i] ?? _createAnimatedSquareData(i);
+      animatedSquares[i] = currentData.copyWith(
+        letter: letters[i],
+        selected: selected[i],
+        gridIndex: i,
+      );
+    }
+  }
 
   // Game control functions
   void pauseGame() {
@@ -125,6 +211,7 @@ class LettrisScreenState extends State<LettrisScreen> {
       displayText = '';
       gameOver = false;
       gameInPlay = false;
+      isAnimating = false;
     });
     
     // Reset square array
@@ -132,6 +219,9 @@ class LettrisScreenState extends State<LettrisScreen> {
     for (int i = 0; i < totalSquares; i++) {
       squareArray.add(Square(index: i));
     }
+    
+    // Reset animations
+    _initializeAnimations();
     
     // Add initial falling squares even if game is not in play yet
     refreshFallingSquares();
@@ -240,6 +330,13 @@ class LettrisScreenState extends State<LettrisScreen> {
         final index = updatedCells[i].key;
         letters[index] = squareArray[index].alphabet;
         selected[index] = updatedCells[i].value;
+        
+        // Update animation data to stay in sync
+        final currentAnimData = animatedSquares[index] ?? _createAnimatedSquareData(index);
+        animatedSquares[index] = currentAnimData.copyWith(
+          letter: letters[index],
+          selected: selected[index],
+        );
       }
     });
   }
@@ -566,13 +663,18 @@ class LettrisScreenState extends State<LettrisScreen> {
     final availableHeight = screenSize.height - headerHeight - bottomHeight - MediaQuery.of(context).padding.vertical;
     final cellSize = (screenSize.width - (gridPadding * 2) - (cellSpacing * (gridWidth - 1))) / gridWidth;
     
-    // Generate grid items
+    // Generate grid items with animation support
     final gridItems = List.generate(totalSquares, (index) {
-      return GameSquare(
-        key: ValueKey('square_$index'),
-        letter: letters[index],
-        selected: selected[index],
+      final animatedData = animatedSquares[index] ?? _createAnimatedSquareData(index);
+      
+      return AnimatedGameSquare(
+        key: ValueKey('animated_square_$index'),
+        data: animatedData.copyWith(
+          letter: letters[index],
+          selected: selected[index],
+        ),
         onTap: () => handleSquareClick(index),
+        gridWidth: gridWidth,
         fontSize: _getResponsiveFontSize(context, baseSize: 18, scaleFactor: 0.01),
       );
     });
@@ -723,13 +825,18 @@ class LettrisScreenState extends State<LettrisScreen> {
     // For landscape, we'll use a side-by-side layout
     final cellSize = (screenSize.height - MediaQuery.of(context).padding.vertical - (gridPadding * 2) - (cellSpacing * (gridWidth - 1))) / gridWidth;
     
-    // Generate grid items
+    // Generate grid items with animation support
     final gridItems = List.generate(totalSquares, (index) {
-      return GameSquare(
-        key: ValueKey('square_$index'),
-        letter: letters[index],
-        selected: selected[index],
+      final animatedData = animatedSquares[index] ?? _createAnimatedSquareData(index);
+      
+      return AnimatedGameSquare(
+        key: ValueKey('animated_square_$index'),
+        data: animatedData.copyWith(
+          letter: letters[index],
+          selected: selected[index],
+        ),
         onTap: () => handleSquareClick(index),
+        gridWidth: gridWidth,
         fontSize: _getResponsiveFontSize(context, baseSize: 16, scaleFactor: 0.008),
       );
     });
