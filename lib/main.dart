@@ -4,6 +4,7 @@ import 'package:lettris/screens/home_screen.dart';
 import 'package:lettris/screens/lettris_screen.dart';
 import 'package:lettris/utils/game_utils.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lettris/widgets/animated_game_square.dart';
 
 void main() async {
   // Ensure Flutter is initialized
@@ -50,6 +51,21 @@ Future<void> _initializeDictionary() async {
   }
 }
 
+// Helper function to build the animated Lettris screen
+Widget _buildAnimatedLettrisScreen() {
+  return const LettrisScreenWithAnimations();
+}
+
+// Wrapper class for the animated version
+class LettrisScreenWithAnimations extends StatelessWidget {
+  const LettrisScreenWithAnimations({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const LettrisScreen(); // Use the existing screen with enhanced animated squares
+  }
+}
+
 class LettrisApp extends StatelessWidget {
   const LettrisApp({super.key});
 
@@ -83,7 +99,7 @@ class LettrisApp extends StatelessWidget {
       ),
       routes: {
         '/': (context) => const HomeScreen(),
-        '/lettris': (context) => const LettrisScreen(),
+        '/lettris': (context) => _buildAnimatedLettrisScreen(),
       },
       initialRoute: '/',
       // Add error handling for navigation
