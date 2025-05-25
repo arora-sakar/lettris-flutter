@@ -54,7 +54,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16), // Increased from 12
                   child: Center(
                     child: Text(
                       'Lettris',

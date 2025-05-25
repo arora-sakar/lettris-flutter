@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:lettris/utils/game_utils.dart';
 import 'package:lettris/utils/dictionary/dictionary_loader.dart';
 import 'package:lettris/utils/dictionary/word_dictionary.dart';
-import 'package:lettris/widgets/animated_game_square.dart';
 
-// Square widget for the game grid with basic animations
-class GameSquare extends StatefulWidget {
+// Square widget for the game grid
+class GameSquare extends StatelessWidget {
   final String letter;
   final bool selected;
   final VoidCallback onTap;
@@ -20,145 +19,53 @@ class GameSquare extends StatefulWidget {
   });
 
   @override
-  State<GameSquare> createState() => _GameSquareState();
-}
-
-class _GameSquareState extends State<GameSquare>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
-  
-  String _previousLetter = '';
-  bool _wasSelected = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
-    
-    _opacityAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeIn,
-    ));
-    
-    _previousLetter = widget.letter;
-    _wasSelected = widget.selected;
-    
-    // Trigger animation if there's content
-    if (widget.letter.isNotEmpty) {
-      _animationController.forward();
-    }
-  }
-
-  @override
-  void didUpdateWidget(GameSquare oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    
-    // Animate when letter appears or changes
-    if (widget.letter != _previousLetter) {
-      if (widget.letter.isNotEmpty) {
-        _animationController.reset();
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-      _previousLetter = widget.letter;
-    }
-    
-    // Animate selection changes
-    if (widget.selected != _wasSelected) {
-      _animationController.forward();
-      _wasSelected = widget.selected;
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     String squareClass = '';
     Color backgroundColor = Colors.grey[200]!;
     BoxBorder? border;
 
-    if (widget.letter.isEmpty) {
+    if (letter.isEmpty) {
       squareClass = "empty-square";
       backgroundColor = Colors.grey[200]!;
       border = null;
     } else {
       // Generate a color based on the letter
-      final int letterCode = widget.letter.codeUnitAt(0) - 'A'.codeUnitAt(0);
+      final int letterCode = letter.codeUnitAt(0) - 'A'.codeUnitAt(0);
       final double hue = (letterCode * 13.85) % 360; // Distribute colors around the hue wheel
       
-      if (widget.selected) {
+      if (selected) {
         backgroundColor = HSLColor.fromAHSL(1.0, hue, 0.7, 0.8).toColor();
-        border = Border.all(color: Colors.black, width: 2, style: BorderStyle.solid);
+        border = Border.all(color: Colors.black, width: 1, style: BorderStyle.solid);
       } else {
         backgroundColor = HSLColor.fromAHSL(1.0, hue, 0.7, 0.5).toColor();
         border = Border.all(color: Colors.black, width: 1, style: BorderStyle.solid);
       }
     }
 
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: widget.letter.isEmpty ? 1.0 : _scaleAnimation.value,
-          child: Opacity(
-            opacity: widget.letter.isEmpty ? 1.0 : _opacityAnimation.value,
-            child: GestureDetector(
-              onTap: widget.selected ? null : widget.onTap,
-              child: Container(
-                // Add minimum constraints for better accessibility
-                constraints: const BoxConstraints(
-                  minWidth: 48.0,
-                  minHeight: 48.0,
-                ),
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  border: border,
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: widget.letter.isNotEmpty ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 3,
-                      offset: const Offset(0, 2),
-                    ),
-                  ] : null,
-                ),
-                child: Center(
-                  child: Text(
-                    widget.letter,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: widget.fontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+    return GestureDetector(
+      onTap: selected ? null : onTap,
+      child: Container(
+        // Add minimum constraints for better accessibility
+        constraints: const BoxConstraints(
+          minWidth: 48.0,
+          minHeight: 48.0,
+        ),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          border: border,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Center(
+          child: Text(
+            letter,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: fontSize,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
