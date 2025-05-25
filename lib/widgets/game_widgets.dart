@@ -20,49 +20,63 @@ class GameSquare extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String squareClass = '';
-    Color backgroundColor = Colors.grey[200]!;
-    BoxBorder? border;
-
-    if (letter.isEmpty) {
-      squareClass = "empty-square";
-      backgroundColor = Colors.grey[200]!;
-      border = null;
-    } else {
-      // Generate a color based on the letter
-      final int letterCode = letter.codeUnitAt(0) - 'A'.codeUnitAt(0);
-      final double hue = (letterCode * 13.85) % 360; // Distribute colors around the hue wheel
-      
-      if (selected) {
-        backgroundColor = HSLColor.fromAHSL(1.0, hue, 0.7, 0.8).toColor();
-        border = Border.all(color: Colors.black, width: 1, style: BorderStyle.solid);
-      } else {
-        backgroundColor = HSLColor.fromAHSL(1.0, hue, 0.7, 0.5).toColor();
-        border = Border.all(color: Colors.black, width: 1, style: BorderStyle.solid);
-      }
-    }
+    // Generate colors based on letter
+    final int letterCode = letter.isEmpty ? 0 : letter.codeUnitAt(0) - 'A'.codeUnitAt(0);
+    final double hue = (letterCode * 13.85) % 360;
+    
+    final Color normalColor = letter.isEmpty 
+        ? Colors.grey[200]!
+        : HSLColor.fromAHSL(1.0, hue, 0.7, 0.5).toColor();
+    
+    final Color selectedColor = letter.isEmpty
+        ? Colors.grey[200]!
+        : HSLColor.fromAHSL(1.0, hue, 0.7, 0.8).toColor();
 
     return GestureDetector(
-      onTap: selected ? null : onTap,
-      child: Container(
+      onTap: (selected || letter.isEmpty)? null : onTap,
+      child: AnimatedContainer(
+        // Animation duration
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        
         // Add minimum constraints for better accessibility
         constraints: const BoxConstraints(
           minWidth: 48.0,
           minHeight: 48.0,
         ),
+        
+        // Animated properties
         decoration: BoxDecoration(
-          color: backgroundColor,
-          border: border,
+          color: selected ? selectedColor : normalColor,
+          border: letter.isEmpty ? null : Border.all(
+            color: Colors.black,
+            width: selected ? 1.0 : 0.5, // Animated border width: 0.5px to 1px
+          ),
           borderRadius: BorderRadius.circular(4),
+          // Add shadow animation for selection
+          boxShadow: selected ? [
+            const BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(2, 2),
+            )
+          ] : null,
         ),
+        
+        // Optional: Animate size for emphasis
+        transform: selected 
+            ? (Matrix4.identity()..scale(1.05)) 
+            : Matrix4.identity(),
+        
         child: Center(
-          child: Text(
-            letter,
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
             style: TextStyle(
               color: Colors.white,
-              fontSize: fontSize,
+              fontSize: selected ? fontSize * 1.1 : fontSize, // Animate text size
               fontWeight: FontWeight.bold,
             ),
+            child: Text(letter),
           ),
         ),
       ),
